@@ -1,6 +1,5 @@
 package com.pilaka.springjwt.config;
 
-import org.apache.logging.log4j.Logger;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.job.builder.JobBuilder;
@@ -16,6 +15,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.task.SimpleAsyncTaskExecutor;
+import org.springframework.core.task.TaskExecutor;
 import org.springframework.transaction.PlatformTransactionManager;
 
 import com.pilaka.springjwt.entity.Employee;
@@ -26,26 +27,18 @@ import lombok.RequiredArgsConstructor;
 @Configuration
 @RequiredArgsConstructor
 public class BatchConfig {
-
-	
 	@Autowired
 	private final EmployeeRepository repository;
-	
 	@Autowired
 	private final JobRepository jobRepository;
-	
 	@Autowired
 	private final PlatformTransactionManager  platformTransactionManager;
-	
-	
-	
-	
 	@Bean
 	public FlatFileItemReader<Employee> itemReader() {
 		FlatFileItemReader<Employee> itemReader = new FlatFileItemReader<Employee>();
 		try {
 			//itemReader.setResource(new FileSystemResource("/src/main/resources/employeedata.csv"));
-			itemReader.setResource(new FileSystemResource("X:\\java\\zips\\spring-jwt\\spring-jwt\\src\\main\\resources\\employeedata.csv"));		
+			itemReader.setResource(new FileSystemResource("X:\\eclipse2023-work-space-git-repo\\git-batch-jobs\\src\\main\\resources\\employeedata.csv"));		
 			itemReader.setName("csvReader");
 			itemReader.setLineMapper(lineMapper());
 			itemReader.setLinesToSkip(1);
@@ -56,39 +49,24 @@ public class BatchConfig {
 		}
 		return itemReader;		
 	}
-	
-	
 	private LineMapper<Employee> lineMapper(){
 	
-		
 		DefaultLineMapper<Employee> employees = new DefaultLineMapper<>();
-	
 		DelimitedLineTokenizer lineTockenizer = new DelimitedLineTokenizer();
 		lineTockenizer.setDelimiter(",");
 		lineTockenizer.setStrict(false);
 		lineTockenizer.setNames("employee_id","employee_Name","email","gender");
 		BeanWrapperFieldSetMapper <Employee> fieldsMapper = new BeanWrapperFieldSetMapper<Employee>();
 		fieldsMapper.setTargetType(Employee.class);
-	
 		employees.setLineTokenizer(lineTockenizer);
 		employees.setFieldSetMapper(fieldsMapper);
-		
-	
 		return employees;
 	}
 	@Bean
 	public RepositoryItemWriter<Employee> writer () {
 		RepositoryItemWriter<Employee> writer = new RepositoryItemWriter<>();
-	
 		writer.setRepository(repository);
-		writer.setMethodName("save");
-		System.out.println("3-writer");
-
-		
-		//	itemReader.read();
-		System.out.println("333333333333-writer: "+	writer);
-			
-		
+		writer.setMethodName("save");	
 		return writer;
 	}
 	
@@ -99,9 +77,7 @@ public class BatchConfig {
 	}
 	@Bean
 	public Step importStep() throws Exception {
-		System.out.println("5-importStep");
-		
-		return new StepBuilder("csvImport",jobRepository)
+		return new StepBuilder("csvImport3",jobRepository)
 			   .<Employee, Employee>chunk(5,platformTransactionManager)
 			   .reader(itemReader())
 			   .processor(processer())
@@ -110,11 +86,20 @@ public class BatchConfig {
 	}
 	@Bean
 	public Job runJob() throws Exception {
-		System.out.println("6-runJob");
-		
-		return new JobBuilder("importEmployees", jobRepository)
+	return new JobBuilder("importEmployees", jobRepository)
 				   .start(importStep())
 				   .build();
 		
 	}
+	
+	//for running parallel threads to run the batch job
+	@Bean
+	public TaskExecutor myTaskExecutor() {
+		
+		SimpleAsyncTaskExecutor asyncTaskExecutor = new SimpleAsyncTaskExecutor();
+		asyncTaskExecutor.setConcurrencyLimit(5);
+		return asyncTaskExecutor;
+		
+	}
+	
 }

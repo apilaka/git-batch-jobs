@@ -44,48 +44,28 @@ public class EmployeeController {
 	
 	@Autowired
 	private final Job job;
-	
-	
+		
 	@GetMapping("/listEmployees")
 	public CompletableFuture<List<Employee>> listEmployees() {
 		return CompletableFuture.completedFuture(employeeService.listEmployees());
-		
+
 	}
-	
-	@PostMapping("/loadEmployees2")
+
+	@PostMapping("/loadEmployees")
 	public void importEmployeesFromCSV() {
-		
-		JobParameters jobParameters = new JobParametersBuilder()
-				.addLong("startAt", System.currentTimeMillis())
+		JobParameters jobParameters = new JobParametersBuilder().addLong("startAt", System.currentTimeMillis())
 				.toJobParameters();
-		
+
 		try {
 			jobLauncher.run(job, jobParameters);
-		} catch (JobExecutionAlreadyRunningException | JobRestartException | JobInstanceAlreadyCompleteException
-				| JobParametersInvalidException e) {
-			// TODO Auto-generated catch block
+		} catch (JobExecutionAlreadyRunningException 
+				| JobRestartException 
+				| JobInstanceAlreadyCompleteException
+				| JobParametersInvalidException e)
+		{
 			e.printStackTrace();
 		}
-		
-		
-				
-		
 	}
-	
-	@RequestMapping(value = "/loadEmployees", method = RequestMethod.POST, consumes = "application/json")
-	public ResponseEntity<Employee> addEmployeeList(@RequestBody List<Employee> employees) {
-		employees.forEach(employee->{
-			employeeService.addEmployee(employee);
-		});
-	
-		return new ResponseEntity<>(HttpStatus.OK);
-
-	}	
-	
-	
-	
-
-
 }
 
 
