@@ -15,6 +15,12 @@ import com.pilaka.springjwt.service.Gender;
 public class EmployeeService {
 
 	
+	public EmployeeService(EmployeeRepository repo) {
+		super();
+		this.repo = repo;
+	}
+
+
 	@Autowired
 	EmployeeRepository repo;
 	

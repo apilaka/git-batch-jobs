@@ -48,6 +48,7 @@ public class Users {
 	@Column
 	private Gender gender;
 
+
 	
 
 }
